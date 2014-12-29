@@ -93,7 +93,7 @@ void ConcurrentStack<T>::pop()
 		topElem = stackTop;
 		if (NULL == topElem)
 			return;
-		topElemNext = stackTop->next;
+		topElemNext = topElem->next;
 	} while (InterlockedCompareExchangePointer((volatile PVOID*) &stackTop, topElemNext, topElem) != topElem);
 	if (topElemNext)
 		delete topElem;
@@ -110,6 +110,7 @@ void ConcurrentStack<T>::getTopAndPop(T& retVal)
 		return;
 	}
 	Node<T>* topElem;
+	Node<T>* topElemNext;
 	do
 	{
 		topElem = stackTop;
@@ -118,9 +119,13 @@ void ConcurrentStack<T>::getTopAndPop(T& retVal)
 			retVal = NULL;
 			return;
 		}
-	} while (InterlockedCompareExchangePointer((volatile PVOID*) &stackTop, stackTop->next, topElem) != topElem);
+		topElemNext = topElem->next;
+	} while (InterlockedCompareExchangePointer((volatile PVOID*) &stackTop, topElemNext, topElem) != topElem);
 	retVal = topElem->value;
-	delete topElem;
+	if (topElemNext)
+		delete topElem;
+	else
+		sentinel = topElem;
 }
 
 template<typename T>
