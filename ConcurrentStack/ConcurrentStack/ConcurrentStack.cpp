@@ -20,6 +20,8 @@ class ConcurrentStack
 {
 	Node<T>* stackTop;
 
+	Node<T>* sentinel;
+
 	/* Disallow copy-construction */
 	ConcurrentStack(const ConcurrentStack<T>&);
 
@@ -85,13 +87,18 @@ void ConcurrentStack<T>::pop()
 	if (NULL == stackTop)
 		return;
 	Node<T>* topElem;
+	Node<T>* topElemNext;
 	do
 	{
 		topElem = stackTop;
 		if (NULL == topElem)
 			return;
-	} while (InterlockedCompareExchangePointer((volatile PVOID*) &stackTop, stackTop->next, topElem) != topElem);
-	delete topElem;
+		topElemNext = stackTop->next;
+	} while (InterlockedCompareExchangePointer((volatile PVOID*) &stackTop, topElemNext, topElem) != topElem);
+	if (topElemNext)
+		delete topElem;
+	else
+		sentinel = topElem;
 }
 
 template<typename T>
@@ -124,6 +131,8 @@ ConcurrentStack<T>::~ConcurrentStack()
 	{
 		getTopAndPop(dummy);
 	} while (NULL != dummy);
+	if (sentinel)
+		delete sentinel;
 }
 
 
