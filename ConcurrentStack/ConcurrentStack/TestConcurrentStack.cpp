@@ -13,7 +13,8 @@ int _tmain(int argc, _TCHAR* argv [])
 {
 	ConcurrentStack<int>* currStack = new ConcurrentStack < int >;
 	unsigned  uiThread1ID;
-	currStack->push(5);
+	currStack->push(3);
+	currStack->push(1);
 	HANDLE hth1 = (HANDLE) _beginthreadex(
 		NULL,
 		0,
@@ -22,8 +23,10 @@ int _tmain(int argc, _TCHAR* argv [])
 		CREATE_SUSPENDED,  // so we can later call ResumeThread()
 		&uiThread1ID);
 	ResumeThread(hth1);
-	Sleep(5);
+	Sleep(10);
 	currStack->pop();
+	currStack->push(2);
+	currStack->push(1);
 	WaitForSingleObject(hth1, INFINITE);
 	CloseHandle(hth1);
 	delete currStack;
